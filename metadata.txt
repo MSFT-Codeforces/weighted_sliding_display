@@ -1,0 +1,9 @@
+# Metadata
+**Category:** - Coding
+**Topic:** - Competitive Programming
+**Subtopic:** - ["Dynamic Programming", "Sorting Algorithms", "Arrays and Lists", "Algorithm Complexity and Big O Notation"]
+**Difficulty:** - Hard
+**Languages:** - Python
+**Number of Approaches:** - 4, ($O(n^2 2^n)$ -> $O(n^3)$ -> $O(n^2\log n)$ -> $O(n^2)$)
+**Number of Chains:** - 7
+**Model-Breaking:** - False

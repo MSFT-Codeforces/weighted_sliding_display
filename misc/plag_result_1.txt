@@ -1,0 +1,3 @@
+- Codeforces — 1509C “The Sports Festival”: `https://codeforces.com/problemset/problem/1509/c` ([codeforces.com](https://codeforces.com/problemset/problem/1509/c))  
+- AtCoder (Educational DP Contest) — L “Deque”: `https://atcoder.jp/contests/dp/tasks/dp_l` ([atcoder.jp](https://atcoder.jp/contests/dp/tasks/dp_l))  
+- CSES — 1097 “Removal Game”: `https://cses.fi/alon/task/1097` ([cses.fi](https://cses.fi/alon/task/1097))

@@ -1,0 +1,15 @@
+Problem Credits: Proof\_by\_QED
+
+Analysis: Proof\_by\_QED
+
+**Solution**
+
+First, what is the maximum possible value of ci−bj for any i,j? Since ci is the maximum element of some subset of a and bi is the minimum element of some subset of a, the maximum possible value of ci−bj is max(a)−min(a).
+
+Also note that c1=b1 for any reordering of a. By reordering such that the largest element of a appears first and the smallest element of a appears second, the maximum possible value of the score is achieved. This results in a score of (max(a)−min(a))⋅(n−1).
+
+**Code (Python)**
+
+```cpp
+#include "bits/stdc++.h"using namespace std;using ll = long long;using vi = vector<int>; #define endl '\n'#define pb emplace_back#define sz(x) (int)(x).size()#define all(x) (x).begin(), (x).end()#define make_unique(x) sort(all(x)), x.resize(unique(all(x)) - begin(x))#define debug(x) cerr << "[" << __LINE__ << "] "#x" = " << (x) << endl int a[1005]; void solve() {		int n, mx = -1, mn = 1005;		cin >> n;	for (int i = 0 ; i < n; i ++) {		cin >> a[i];		mx = max(mx, a[i]);		mn = min(mn, a[i]);	}		if (n == 0) cout  << 0 << endl;	else  {		cout << 1LL * (mx - mn) * (n - 1) << endl;		} 	return;	}int main() {#ifndef ONLINE_JUDGE	freopen("in.txt", "r", stdin);//	freopen("out.txt", "w", stdout);#endif 	ios::sync_with_stdio(0); cin.tie(0); cout.tie(0); 	int tc = 1;	cin >> tc;	while (tc --) solve(); 	return 0;}
+```

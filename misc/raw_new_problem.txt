@@ -1,0 +1,190 @@
+## Problem: Orangutan’s Expanding Shuffle (Weighted)
+
+You are given an array \(a\) of length \(n\) and an array of weights \(w\) of length \(n\).
+
+First, construct a **deterministic** ordering of the elements of \(a\) as follows:
+
+- Create pairs \((a_i, i)\) for \(i=1..n\).
+- Sort these pairs by increasing \(a_i\); if values are equal, sort by increasing index \(i\).
+- Let \(v_0, v_1, \dots, v_{n-1}\) be the values \(a_i\) in this sorted order.
+
+You will build an array \(p\) of length \(n\) by choosing elements from \(v\) under this rule:
+
+- Choose any position \(s\) and set \(p_1 = v_s\). Mark position \(s\) as used. Let the used positions form a segment \([L,R]=[s,s]\).
+- For each \(k=2..n\):
+  - You must choose **one** of the immediate unused neighbors of the current used segment:
+    - if \(L>0\), you may choose \(v_{L-1}\) (then \(L \leftarrow L-1\));
+    - if \(R<n-1\), you may choose \(v_{R+1}\) (then \(R \leftarrow R+1\)).
+  - Append the chosen value to \(p\).
+
+(So at all times, the used positions in \(v\) form one contiguous segment, and you expand it by 1 to the left or right each step.)
+
+For the resulting array \(p\), for each prefix \(1..i\) define:
+\[
+b_i=\min(p_1,\dots,p_i),\qquad c_i=\max(p_1,\dots,p_i).
+\]
+The **weighted score** is:
+\[
+\text{Score}(p)=\sum_{i=1}^{n} w_i \cdot (c_i-b_i).
+\]
+
+For each test case, output the maximum possible score over all valid constructions of \(p\).
+
+---
+
+### Input Format
+- The first line contains an integer \(t\) — the number of test cases.
+- For each test case:
+  - A line containing an integer \(n\).
+  - A line containing \(n\) integers \(a_1,\dots,a_n\).
+  - A line containing \(n\) integers \(w_1,\dots,w_n\).
+
+### Output Format
+For each test case, output one integer — the maximum possible score.
+
+---
+
+### Constraints
+- \(1 \le t \le 20\)
+- \(1 \le n \le 2000\)
+- \(\sum n \le 2000\) over all test cases
+- \(1 \le a_i \le 10^9\)
+- \(-10^6 \le w_i \le 10^6\)
+- The answer fits in signed 64-bit integer.
+
+---
+
+## Editorial / Solution
+
+### 1) What matters about a prefix
+During the construction we always keep a used segment \([L,R]\) in the sorted array \(v\). The prefix length is:
+\[
+\ell = R-L+1.
+\]
+The elements used so far are exactly \(\{v_L, v_{L+1}, \dots, v_R\}\). Since \(v\) is sorted, for this prefix:
+\[
+b_\ell = v_L,\qquad c_\ell = v_R,
+\]
+so
+\[
+c_\ell - b_\ell = v_R - v_L.
+\]
+Thus, at each step the score contribution depends only on the current segment endpoints \(L,R\).
+
+Also, for \(\ell=1\), always \(c_1-b_1=0\), so the term with \(w_1\) contributes \(0\).
+
+---
+
+### 2) Dynamic Programming over segments
+
+Let \(dp[L][R]\) be the maximum score achievable after selecting exactly the segment \([L..R]\) in \(v\).
+Then the current length is \(\ell = R-L+1\).
+
+**Initialization**
+For every \(i\):
+\[
+dp[i][i] = 0.
+\]
+
+**Transitions**
+From a segment \([L..R]\) of length \(\ell\), we extend to length \(\ell+1\). The new prefix range becomes either:
+- \(v_R - v_{L-1}\) if we extend left, or
+- \(v_{R+1} - v_L\) if we extend right.
+
+So the newly added score term is \(w_{\ell+1}\) times that new range.
+
+Using 0-indexing in code, \(w_{\ell+1}\) corresponds to `w[len]` when `len = ℓ`.
+
+- Extend left (if \(L>0\)):
+  \[
+  dp[L-1][R] = \max\Big(dp[L-1][R],\ dp[L][R] + w_{\ell+1}\cdot (v_R - v_{L-1})\Big)
+  \]
+- Extend right (if \(R+1<n\)):
+  \[
+  dp[L][R+1] = \max\Big(dp[L][R+1],\ dp[L][R] + w_{\ell+1}\cdot (v_{R+1} - v_L)\Big)
+  \]
+
+**Answer**
+After selecting all elements, the segment must be \([0..n-1]\), so the answer is:
+\[
+dp[0][n-1].
+\]
+
+---
+
+### 3) Complexity
+There are \(O(n^2)\) segments, each with \(O(1)\) transitions:
+- Time: \(O(n^2)\)
+- Memory: \(O(n^2)\)
+
+With \(\sum n \le 2000\), this fits comfortably.
+
+---
+
+## Reference Implementation (C++17)
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+
+        vector<long long> a(n), w(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        for (int i = 0; i < n; i++) cin >> w[i];
+
+        // Build deterministic sorted array v by sorting (value, original_index).
+        vector<pair<long long,int>> vp;
+        vp.reserve(n);
+        for (int i = 0; i < n; i++) vp.push_back({a[i], i}); // i is the original index (0-based)
+        sort(vp.begin(), vp.end()); // sorts by value, then by index
+
+        vector<long long> v(n);
+        for (int i = 0; i < n; i++) v[i] = vp[i].first;
+
+        const long long NEG = -(1LL << 62);
+
+        // Flat dp[L*n + R]
+        vector<long long> dp(1LL * n * n, NEG);
+        auto id = [n](int L, int R) -> long long { return 1LL * L * n + R; };
+
+        for (int i = 0; i < n; i++) dp[id(i, i)] = 0;
+
+        // len = current segment length
+        for (int len = 1; len <= n - 1; len++) {
+            // Next added element creates prefix length len+1, weight is w[len] (0-indexed).
+            long long weight = w[len];
+
+            for (int L = 0; L + len - 1 < n; L++) {
+                int R = L + len - 1;
+                long long cur = dp[id(L, R)];
+                if (cur == NEG) continue;
+
+                if (L > 0) {
+                    long long diff = v[R] - v[L - 1];
+                    __int128 cand = (__int128)cur + (__int128)weight * diff;
+                    long long &ref = dp[id(L - 1, R)];
+                    ref = max(ref, (long long)cand);
+                }
+                if (R + 1 < n) {
+                    long long diff = v[R + 1] - v[L];
+                    __int128 cand = (__int128)cur + (__int128)weight * diff;
+                    long long &ref = dp[id(L, R + 1)];
+                    ref = max(ref, (long long)cand);
+                }
+            }
+        }
+
+        cout << dp[id(0, n - 1)] << "\n";
+    }
+    return 0;
+}
+```

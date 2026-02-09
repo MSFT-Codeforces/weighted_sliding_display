@@ -1,0 +1,227 @@
+## Problem: The Curator’s Sliding Display (Weighted)
+
+In the Museum of Oddities, an orangutan curator has lined up **n artifacts** by “aura strength,” but visitors will only see the artifacts in the order the curator pulls them onto a display table.
+
+Each artifact has:
+- an aura value `a[i]`
+- a “spotlight importance” for the i-th moment `w[i]` (weights may be negative)
+
+### Step 1 — Build the fixed lineup
+Create pairs `(a[i], i)` for `i = 1..n`, then sort:
+1. increasing `a[i]`
+2. if tied, increasing original index `i`
+
+Let the sorted aura values be:
+
+`v[0], v[1], ..., v[n-1]`  (this is **deterministic**)
+
+### Step 2 — Pull artifacts onto the table (restricted rule)
+You will form an array `p[1..n]` by repeatedly taking artifacts from `v` like this:
+
+- Choose any starting position `s` and set `p[1] = v[s]`.
+- Mark `s` as taken; the taken positions form an interval `[L, R] = [s, s]`.
+- For each next step `k = 2..n`, you must take **exactly one** artifact adjacent to the taken interval:
+  - if `L > 0`, you may take `v[L-1]` (then `L := L-1`)
+  - if `R < n-1`, you may take `v[R+1]` (then `R := R+1`)
+
+So the set of taken elements in `v` is always one contiguous block, growing outward by 1 each step.
+
+### Step 3 — Score the show
+For each prefix `p[1..i]`, define:
+- `min_i = min(p[1..i])`
+- `max_i = max(p[1..i])`
+
+The **weighted spectacle score** is:
+\[
+\text{Score}(p) = \sum_{i=1}^{n} w_i \cdot (max_i - min_i)
+\]
+
+### Task
+For each test case, output the **maximum possible** score over all valid ways to build `p`.
+
+---
+
+## Input Format
+- First line: integer `t` — number of test cases
+For each test case:
+- Line 1: integer `n`
+- Line 2: `n` integers `a1..an`
+- Line 3: `n` integers `w1..wn`
+
+## Output Format
+For each test case, print one integer: the maximum achievable score.
+
+---
+
+## Constraints
+- `1 ≤ t ≤ 20`
+- `1 ≤ n ≤ 2000`
+- `sum of n over all test cases ≤ 2000`
+- `1 ≤ a[i] ≤ 1e9`
+- `-1e6 ≤ w[i] ≤ 1e6`
+- Answer fits in signed 64-bit integer.
+
+---
+
+## Sample Input
+```
+2
+3
+5 1 4
+10 1 1
+4
+8 2 2 10
+0 -2 5 1
+```
+
+## Sample Output
+```
+7
+44
+```
+
+---
+
+# Editorial
+
+## Key observation: a prefix is always a sorted-interval
+At any time, the taken positions in `v` form a contiguous interval `[L, R]`.
+
+The prefix length is:
+\[
+\ell = R - L + 1
+\]
+
+Because `v` is sorted, the minimum and maximum among the taken elements are simply:
+- `min_ℓ = v[L]`
+- `max_ℓ = v[R]`
+
+So the spread for that prefix is:
+\[
+max_\ell - min_\ell = v[R] - v[L]
+\]
+
+Also note: for `ℓ = 1`, spread is `0`, so the term with `w1` always contributes `0`.
+
+Therefore, the entire process only depends on the current interval endpoints `(L, R)`.
+
+---
+
+## DP over intervals
+
+### State
+Let `dp[L][R]` = maximum score achievable after having taken exactly the interval `v[L..R]`.
+
+Then current length is `len = R - L + 1`.
+
+### Initialization
+For any single element interval:
+- `dp[i][i] = 0`
+
+### Transition
+From interval `[L, R]` (length `len`), we add one more element to make length `len+1`. The newly-added score term uses weight `w[len+1]`.
+
+With 0-based arrays in code:
+- current length `len` corresponds to having placed `len` elements
+- the next weight is `w[len]` (since `w[0]` is for length 1, `w[1]` for length 2, ...)
+
+Two ways to expand:
+
+1) Expand left (if `L > 0`):
+- new interval `[L-1, R]`
+- new spread = `v[R] - v[L-1]`
+- update:
+\[
+dp[L-1][R] = \max\Big(dp[L-1][R],\ dp[L][R] + w_{len+1}\cdot (v[R]-v[L-1])\Big)
+\]
+
+2) Expand right (if `R+1 < n`):
+- new interval `[L, R+1]`
+- new spread = `v[R+1] - v[L]`
+- update:
+\[
+dp[L][R+1] = \max\Big(dp[L][R+1],\ dp[L][R] + w_{len+1}\cdot (v[R+1]-v[L])\Big)
+\]
+
+### Answer
+After taking all elements, the interval must be `[0, n-1]`, so output:
+- `dp[0][n-1]`
+
+---
+
+## Complexity
+There are `O(n^2)` intervals; each has up to 2 transitions.
+
+- Time: `O(n^2)` per test case
+- Memory: `O(n^2)`
+
+With `sum(n) ≤ 2000`, this is safe.
+
+---
+
+# Reference Implementation (C++17)
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<long long> a(n), w(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        for (int i = 0; i < n; i++) cin >> w[i];
+
+        // Build deterministic lineup v by sorting (a[i], i)
+        vector<pair<long long,int>> tmp;
+        tmp.reserve(n);
+        for (int i = 0; i < n; i++) tmp.push_back({a[i], i});
+        sort(tmp.begin(), tmp.end());
+
+        vector<long long> v(n);
+        for (int i = 0; i < n; i++) v[i] = tmp[i].first;
+
+        const long long NEG = -(1LL << 62);
+
+        // dp[L*n + R]
+        vector<long long> dp(1LL * n * n, NEG);
+        auto id = [n](int L, int R) -> long long { return 1LL * L * n + R; };
+
+        for (int i = 0; i < n; i++) dp[id(i, i)] = 0;
+
+        // len = current interval length
+        // next added element makes length len+1, uses weight w[len] (0-based)
+        for (int len = 1; len <= n - 1; len++) {
+            long long weight = w[len];
+
+            for (int L = 0; L + len - 1 < n; L++) {
+                int R = L + len - 1;
+                long long cur = dp[id(L, R)];
+                if (cur == NEG) continue;
+
+                if (L > 0) {
+                    long long diff = v[R] - v[L - 1];
+                    __int128 cand = (__int128)cur + (__int128)weight * diff;
+                    long long &ref = dp[id(L - 1, R)];
+                    ref = max(ref, (long long)cand);
+                }
+                if (R + 1 < n) {
+                    long long diff = v[R + 1] - v[L];
+                    __int128 cand = (__int128)cur + (__int128)weight * diff;
+                    long long &ref = dp[id(L, R + 1)];
+                    ref = max(ref, (long long)cand);
+                }
+            }
+        }
+
+        cout << dp[id(0, n - 1)] << "\n";
+    }
+    return 0;
+}
+```

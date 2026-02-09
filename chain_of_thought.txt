@@ -1,0 +1,119 @@
+**[section_01]**
+Parsing the process and what is being maximized
+**[atomic_01_01]**
+We are given two arrays of length $n$: aura values $a_1..a_n$ and weights $w_1..w_n$. The weights may be negative, so increasing the spread $(\max-\min)$ for a prefix can either increase or decrease the total score depending on the sign and magnitude of the corresponding weight.
+**[atomic_01_02]**
+Before any choices, we construct a deterministic sorted lineup. We form pairs $(a_i, i)$ for $i=1..n$ and sort them by increasing $a_i$, and for equal $a_i$ by increasing $i$. Then we define $v_0, v_1, \dots, v_{n-1}$ as the sorted aura values in this order.
+**[atomic_01_03]**
+We build an array $p_1..p_n$ by selecting elements from $v$ under a restriction: choose any start index $s$ and set $p_1=v_s$. Mark $s$ as taken; taken positions form an interval $[L,R]=[s,s]$. For each $k=2..n$, we must take exactly one element adjacent to the interval: either $v_{L-1}$ (if $L>0$) or $v_{R+1}$ (if $R<n-1$), expanding the interval by one.
+**[atomic_01_04]**
+Because we always expand from the ends, after any number of steps the set of taken indices in $v$ is exactly one contiguous segment $[L,R]$. The sequence order in $p$ depends on left/right choices, but the set of chosen values after $i$ steps is precisely $\{v_L, v_{L+1}, \dots, v_R\}$ with $R-L+1=i$.
+**[atomic_01_05]**
+For each prefix $p_1..p_i$, define $\min_i=\min(p_1..p_i)$ and $\max_i=\max(p_1..p_i)$. The score is
+$$
+\text{Score}(p)=\sum_{i=1}^{n} w_i\cdot(\max_i-\min_i).
+$$
+For each test case, the task is to output the maximum possible score over all valid ways to construct $p$.
+
+**[section_02]**
+Designing edge cases and sanity checks for validation
+**[atomic_02_01]**
+Case $n=1$: there is only one prefix and it has spread $0$. Therefore, the score must be $0$ regardless of $a_1$ and $w_1$. This is a baseline check for correct handling of minimal input.
+**[atomic_02_02]**
+All aura values equal: after sorting, $v$ is constant. Every prefix has $\max_i-\min_i=0$, so the score must be $0$ for any weight array (including negative weights). This checks that duplicates and tie-breaking do not introduce accidental nonzero spreads.
+**[atomic_02_03]**
+Auras with many duplicates and some distinct values: this creates intervals where spread stays $0$ for several steps and then starts increasing. It is useful for checking that spread is determined by the endpoints of the taken segment rather than by internal order.
+**[atomic_02_04]**
+Weights all negative for $i\ge 2$: intuitively, large spreads are harmful at almost every length. This kind of test exposes incorrect assumptions that “bigger spread is always better”.
+**[atomic_02_05]**
+Weights with alternating signs, for example $w_2>0, w_3<0, w_4>0$: this stresses trade-offs across lengths and helps detect logic bugs where a method would optimize a single prefix length without considering future contributions.
+**[atomic_02_06]**
+Magnitude stress tests: $a_i$ up to $10^9$ and $|w_i|$ up to $10^6$ can create products near $10^{15}$ per step. Even if the final answer fits in signed 64-bit, intermediate arithmetic can get close to limits, so tests with extreme values help reveal overflow issues.
+
+**[section_03]**
+Implementing brute force enumeration of all valid sequences
+**[atomic_03_01]**
+The most naive strategy is to generate every valid array $p$ explicitly. We choose a start index $s$ in $n$ ways, then repeatedly decide whether to expand left or right whenever both moves are available.
+**[atomic_03_02]**
+This creates a decision tree of depth $n-1$ with up to two branches per level. The number of possible sequences is on the order of $n\cdot 2^{n-1}$, which becomes impossible to enumerate even for moderately large $n$.
+**[atomic_03_03]**
+For each sequence, we would compute the score by scanning prefixes, maintaining the running minimum and maximum of the prefix and adding $w_i\cdot(\max_i-\min_i)$. This requires $O(n)$ work per generated sequence.
+**[atomic_03_04]**
+Putting these together yields an infeasible time bound of approximately $O(n\cdot 2^n\cdot n)=O(n^2 2^n)$. The method fails due to time explosion, not due to memory, and it suggests we must reuse computations shared by many different sequences.
+**[atomic_03_05]**
+Despite being infeasible, manual enumeration for tiny $n$ (like $n=2$ or $n=3$) is still a useful sanity check: it confirms that the allowed moves truly correspond to expanding a contiguous block in $v$ and that no other selections are permitted.
+
+**Complexity (failed):** Time $O(n^2 2^n)$, Space $O(n)$.
+
+**[section_04]**
+Trying dynamic programming by fixing the starting index
+**[atomic_04_01]**
+A refinement is to avoid enumerating full sequences and instead compute the best score via dynamic programming after fixing the initial index $s$. With a fixed start, every taken segment must include position $s$ at all times.
+**[atomic_04_02]**
+For a fixed $s$, after some steps the taken interval can be described as $[s-\ell, s+r]$ for some $\ell,r\ge 0$. We can define a table $\text{dp}_s[\ell][r]$ as the maximum score achievable after taking exactly that interval.
+**[atomic_04_03]**
+Transitions are straightforward: from $(\ell,r)$ we can move to $(\ell+1,r)$ if $s-\ell-1\ge 0$, or to $(\ell,r+1)$ if $s+r+1\le n-1$. Each transition adds the contribution associated with the new prefix length.
+**[atomic_04_04]**
+For one fixed $s$, there are $O(n^2)$ pairs $(\ell,r)$, and each has at most two transitions, so the per-start computation is polynomial and manageable. The problem is that the optimal solution may start at any $s$, so we must repeat this for all $n$ possible starts.
+**[atomic_04_05]**
+Repeating over all $s$ yields $O(n)\cdot O(n^2)=O(n^3)$ time, which is too slow for $n$ up to $2000$. This approach fails because it recomputes similar subproblems many times for different starting indices.
+**[atomic_04_06]**
+The key lesson from this failure is that “where we started” is not essential information once we know the current taken interval in $v$. Different starts can lead to the same interval $[L,R]$, so we should unify those cases into a single shared state rather than solving them separately.
+
+**Complexity (failed):** Time $O(n^3)$, Space $O(n^2)$ per start (or reused storage with the same $O(n^3)$ time).
+
+**[section_05]**
+Aggregating interval states using an associative container
+**[atomic_05_01]**
+To avoid the repeated factor of $n$ from fixing a start, we can define states purely by the taken interval $[L,R]$ in the sorted array $v$. Any valid partial process corresponds to exactly one such interval, and the process can only expand that interval outward.
+**[atomic_05_02]**
+An initial way to implement this is to store $\text{dp}[L,R]$ in a map (or hash map) keyed by the pair $(L,R)$, and process states by increasing interval length $\text{len}=R-L+1$. This avoids creating a full $n\times n$ array up front.
+**[atomic_05_03]**
+From a state $[L,R]$, transitions go to $[L-1,R]$ and $[L,R+1]$ when within bounds. Each transition updates the best known value for the next-length interval using a max operation.
+**[atomic_05_04]**
+In this particular problem, essentially every interval $[L,R]$ is reachable, so the number of states is still $\Theta(n^2)$. The map does not reduce the asymptotic state count; it only changes how we store and access states.
+**[atomic_05_05]**
+Map operations introduce overhead. With an ordered map, each update costs $O(\log n)$, leading to $O(n^2\log n)$ time. Even with hashing, the constant factors can be significant compared to direct indexing, because the DP is naturally dense.
+**[atomic_05_06]**
+This attempt is not ideal performance-wise, but it clarifies the correct shared subproblem identity: the interval endpoints $(L,R)$ alone capture everything needed to evaluate the contribution of the next step, motivating a switch to a dense, indexable DP table.
+
+**Complexity (suboptimal):** Time $O(n^2\log n)$, Space $O(n^2)$.
+
+**[section_06]**
+Building a dense interval DP with constant-time transitions
+**[atomic_06_01]**
+We now store DP values in a dense structure indexed directly by endpoints. Let $\text{dp}[L][R]$ denote the maximum score achievable after selecting exactly the set of values $v_L, v_{L+1}, \dots, v_R$ (in any valid order that expands the interval step by step).
+**[atomic_06_02]**
+The crucial property enabling efficient scoring is that $v$ is sorted. For the selected set corresponding to interval $[L,R]$, the minimum is always $v_L$ and the maximum is always $v_R$, regardless of the order in which elements were taken. Therefore, for length $\text{len}=R-L+1$, the spread is exactly $v_R-v_L$.
+**[atomic_06_03]**
+When we expand an interval of current length $\text{len}$ to length $\text{len}+1$, the only new term added to the total score is the weight for that new prefix length. If the new interval is $[L',R']$, the incremental contribution is
+$$
+w_{\text{len}+1}\cdot(v_{R'}-v_{L'}).
+$$
+This is why each transition can be computed in $O(1)$ time.
+**[atomic_06_04]**
+Initialization: for every single-element interval $[i,i]$, the spread is $0$, so the score is $0$. Hence $\text{dp}[i][i]=0$ for all $i$. This matches the fact that the first prefix always contributes $w_1\cdot 0=0$.
+**[atomic_06_05]**
+Transitions from interval $[L,R]$ with $\text{len}=R-L+1$:
+- If $L>0$, expand left to $[L-1,R]$ and add $w_{\text{len}+1}\cdot(v_R-v_{L-1})$.
+- If $R<n-1$, expand right to $[L,R+1]$ and add $w_{\text{len}+1}\cdot(v_{R+1}-v_L)$.
+We process intervals in increasing order of $\text{len}$ so that updates always go from smaller intervals to larger ones.
+**[atomic_06_06]**
+After taking all elements, the only possible interval is $[0,n-1]$, so the final answer is $\text{dp}[0][n-1]$. Because products $w_i\cdot(v_R-v_L)$ can be large, using wider intermediate arithmetic for the multiplication and addition (before storing into 64-bit) prevents overflow bugs even when the final result is within signed 64-bit.
+
+**Complexity (final approach):** Time $O(n^2)$, Space $O(n^2)$.
+
+**[section_07]**
+Validating the final DP with invariants and implementation-focused checks
+**[atomic_07_01]**
+A correctness invariant to repeatedly verify is: “After exactly $\text{len}$ picks, the chosen indices in $v$ form one contiguous interval $[L,R]$ with $R-L+1=\text{len}$.” This invariant is guaranteed by the move rule, and it is also what justifies representing partial progress using only $(L,R)$.
+**[atomic_07_02]**
+Another key invariant is: “For an interval $[L,R]$, the spread of the chosen set equals $v_R-v_L$.” This holds only because $v$ is sorted, so it is important that the sorting step (including tie-breaking by original index) is performed exactly as specified.
+**[atomic_07_03]**
+Negative weights do not require special-case branching, but they do require that transitions use a maximum over all possible ways to reach a state. A common pitfall is accidentally assuming monotonicity (that larger spreads are always better), which is false when some $w_i<0$.
+**[atomic_07_04]**
+Initialization checks should include both $n=1$ and $n=2$. For $n=2$, the score reduces to $w_2\cdot|v_1-v_0|$, regardless of start choice, which is an easy hand-check to confirm that the first prefix contributes $0$ and only the second prefix contributes nontrivially.
+**[atomic_07_05]**
+Indexing audits are essential: the DP layer corresponding to length $\text{len}$ must use the weight $w_{\text{len}+1}$ (in 1-based weight notation). Off-by-one mistakes here will produce plausible but incorrect answers, especially on small tests where only a few terms exist.
+**[atomic_07_06]**
+Overflow and sentinel-value checks should be part of validation. If unreachable states are initialized to a large negative sentinel, transitions must skip them safely. Additionally, intermediate multiplication should be done in a wider type to avoid undefined behavior, and only then converted back to 64-bit once the value is known to be within bounds.

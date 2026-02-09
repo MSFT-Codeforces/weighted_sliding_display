@@ -1,0 +1,95 @@
+**Problem Statement**
+While exploring the jungle, you meet a rare orangutan with a bow tie. In return for your kindness, it gives you an array \(a\) of length \(n\).
+
+From \(a\), you build two arrays \(b\) and \(c\), each of length \(n\), defined as:
+- \(b_i = \min(a_1, a_2, \ldots, a_i)\)
+- \(c_i = \max(a_1, a_2, \ldots, a_i)\)
+
+The **score** of \(a\) is:
+\[
+\sum_{i=1}^{n} (c_i - b_i)
+\]
+
+Before computing the score, you are allowed to **shuffle** (reorder) the elements of \(a\) however you want.
+
+For each test case, compute the **maximum possible score** after an optimal shuffle.
+
+**Input Format**
+- The first line contains an integer \(t\) \((1 \le t \le 100)\) — the number of test cases.
+- For each test case:
+  - The first line contains an integer \(n\) \((1 \le n \le 1000)\) — the length of the array.
+  - The second line contains \(n\) integers \(a_1, a_2, \ldots, a_n\) \((1 \le a_i \le 1000)\).
+
+It is guaranteed that the sum of \(n\) over all test cases does not exceed \(1000\).
+
+**Output Format**
+For each test case, output one integer — the maximum score achievable.
+
+**Examples**
+Input:
+```
+3
+1
+69
+3
+7 6 5
+5
+1 1 1 2 2
+```
+
+Output:
+```
+0
+4
+4
+```
+
+**Editorial**
+For any prefix \(a_1, \ldots, a_i\), we have:
+- \(c_i\) is the maximum element in that prefix,
+- \(b_i\) is the minimum element in that prefix.
+
+So for every \(i\),
+\[
+c_i - b_i \le \max(a) - \min(a)
+\]
+because no prefix can have a maximum larger than the global maximum or a minimum smaller than the global minimum.
+
+Also, for any ordering, the first prefix has one element, so:
+\[
+c_1 = b_1 \Rightarrow c_1 - b_1 = 0
+\]
+
+To maximize the total score, we want \(c_i - b_i\) to be as large as possible for all \(i \ge 2\). This can be achieved by placing:
+- the global maximum first,
+- the global minimum second.
+
+Then for every \(i \ge 2\), the prefix already contains both \(\max(a)\) and \(\min(a)\), hence:
+\[
+c_i = \max(a), \quad b_i = \min(a) \Rightarrow c_i - b_i = \max(a) - \min(a)
+\]
+
+There are \(n-1\) indices with \(i \ge 2\), so the maximum score is:
+\[
+(\max(a) - \min(a)) \cdot (n - 1)
+\]
+
+**Code**
+```python
+import sys
+
+def solve():
+    it = iter(sys.stdin.read().strip().split())
+    t = int(next(it))
+    out = []
+    for _ in range(t):
+        n = int(next(it))
+        arr = [int(next(it)) for _ in range(n)]
+        mx = max(arr)
+        mn = min(arr)
+        out.append(str((mx - mn) * (n - 1)))
+    print("\n".join(out))
+
+if __name__ == "__main__":
+    solve()
+```
