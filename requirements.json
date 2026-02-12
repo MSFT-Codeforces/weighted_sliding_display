@@ -1,15 +1,15 @@
 {
-  "original": "https://www.codeforces.com/problemset/problem/2030/A",
-  "title": "Weighted Sliding Display",
-  "tags": [
-    "Dynamic Programming",
-    "Sorting Algorithms",
-    "Arrays and Lists",
-    "Algorithm Complexity and Big O Notation"
-  ],
-  "model_breaking": false,
-  "time": 1,
-  "space": 32,
-  "new_colab_link": "https://colab.research.google.com/drive/10ipM3EfT0ZGM38GqFgIjeewAjBk631yd",
-  "github_link": "https://github.com/MSFT-Codeforces/weighted_sliding_display"
+    "original": "https://www.codeforces.com/problemset/problem/2030/A",
+    "title": "Weighted Sliding Display",
+    "tags": [
+        "Dynamic Programming",
+        "Sorting Algorithms",
+        "Arrays and Lists",
+        "Algorithm Complexity and Big O Notation"
+    ],
+    "model_breaking": false,
+    "time": 1,
+    "space": 32,
+    "new_colab_link": "https://colab.research.google.com/drive/10ipM3EfT0ZGM38GqFgIjeewAjBk631yd",
+    "github_link": "https://github.com/MSFT-Codeforces/weighted_sliding_display"
 }

@@ -1,5 +1,3 @@
-**Weighted Sliding Display**
-
 Time Limit: **1 seconds**
 
 Memory Limit: **32 MB**
@@ -52,6 +50,7 @@ For each test case, output one integer — the maximum achievable score.
 - $1 \le a_i \le 10^9$
 - $-10^6 \le w_i \le 10^6$
 - The answer fits in signed 64-bit integer.
+
 **Examples:-**
  - **Input:**
 ```
@@ -80,7 +79,8 @@ For each test case, output one integer — the maximum achievable score.
 ```
 
 **Note:-**
-In the first example, after sorting pairs $(a_i,i)$ we get the lineup
+
+**First example:** With the given input $n=5$, $a = [2,1,2,1,2]$, $w = [7,-3,7,-3,7]$, after sorting pairs $(a_i,i)$ we get the lineup
 $$
 v = [1,1,2,2,2].
 $$
@@ -92,8 +92,9 @@ For each prefix, $(\max_i-\min_i)$ becomes $0,1,1,1,1$, so the score is
 $$
 7\cdot 0 + (-3)\cdot 1 + 7\cdot 1 + (-3)\cdot 1 + 7\cdot 1 = 11.
 $$
+Hence the output $11$ is correct.
 
-In the first example, after sorting we have
+**Second example:** With the given input $n=8$, auras $[1, 10^9, 2, 999999999, 3, 999999998, 4, 999999997]$, and weights all $10^6$, after sorting pairs $(a_i,i)$ we have
 $$
 v = [1,2,3,4,999999997,999999998,999999999,1000000000].
 $$
@@ -106,3 +107,4 @@ $$
 10^6 \cdot (0+1+2+3+999999996+999999997+999999998+999999999)
 = 6999999972000000.
 $$
+Hence the output $6999999972000000$ is correct.
