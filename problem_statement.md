@@ -1,4 +1,4 @@
-Time Limit: **1 seconds**
+Time Limit: **1 second**
 
 Memory Limit: **32 MB**
 
@@ -16,7 +16,7 @@ Now you will produce an array $p_1, p_2, \dots, p_n$ by taking elements from $v$
 - Mark position $s$ as taken. The taken positions always form an interval $[L, R]$ (initially $L=R=s$).
 - For each step $k=2..n$, you must take exactly one element adjacent to the current taken interval:
   - if $L>0$, you may take $v_{L-1}$ (then set $L := L-1$),
-  - if $R<n-1$, you may take $v_{R+1}$ (then set $R := R+1$).
+  - if $R < n-1$, you may take $v_{R+1}$ (then set $R := R+1$).
 
 For each prefix $p_1..p_i$, define:
 - $\min_i = \min(p_1, p_2, \dots, p_i)$
@@ -98,13 +98,19 @@ Hence the output $11$ is correct.
 $$
 v = [1,2,3,4,999999997,999999998,999999999,1000000000].
 $$
-All weights are $10^6$, so we want large ranges as early as possible; starting at an end and always extending in the same direction gives
+
+All weights are $10^6$, so we want large ranges as early as possible; starting near the large gap and taking across it immediately is optimal. For example, start at $s=3$ (value $4$), then take $v_{4}=999999997$, then expand left until reaching $1$, and finally expand right to the end, producing
 $$
-(\max_i-\min_i) = 0,1,2,3,999999996,999999997,999999998,999999999.
+p = [4,999999997,3,2,1,999999998,999999999,1000000000].
+$$
+
+Then
+$$
+(\max_i-\min_i) = 0,999999993,999999994,999999995,999999996,999999997,999999998,999999999.
 $$
 Thus the score equals
 $$
-10^6 \cdot (0+1+2+3+999999996+999999997+999999998+999999999)
+10^6 \cdot (0+999999993+999999994+999999995+999999996+999999997+999999998+999999999)
 = 6999999972000000.
 $$
 Hence the output $6999999972000000$ is correct.
